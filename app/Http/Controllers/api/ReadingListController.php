@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Book;
 use App\Models\ReadingList;
+use App\Models\ReadingListItem;
 use Illuminate\Support\Facades\Auth;
 
 class ReadingListController extends Controller
@@ -81,7 +83,7 @@ class ReadingListController extends Controller
 		if (!$readingList) return response()->json(['message' => 'No list found.'], 404);
 
 		$readingList->deleteList();
-		return response()->json(['message' => 'List deleted successfully.'], 204);
+		return response()->json(['message' => 'List deleted successfully.'], 200);
 	}
 
 	public function listItems($id)
@@ -93,10 +95,104 @@ class ReadingListController extends Controller
 		return $readingList->readingListItems;
 	}
 
+	public function addListItem($id)
+	{
+		// CHECK IF BOOK EXISTS
+		$book = Book::find(request('book_id'));
+		if (!$book) return response()->json(['message' => 'No book found.'], 404);
+
+		$readingList =  ReadingList::where('user_id', Auth::user()->id)
+			->where('id', $id)->first();
+		if (!$readingList) return response()->json(['message' => 'No list found.'], 404);
+
+		// GET LAST SORT NUMBER
+		$sortNumber = ReadingListItem::getNextSortNo($readingList);
+
+		$readingListItem = ReadingListItem::create([
+			'reading_list_id' => $id,
+			'book_id' => request('book_id'),
+			'sort_no' => $sortNumber
+		]);
+
+		return $readingListItem;
+	}
+
+	public function removeListItem($id, $bookId)
+	{
+		// CHECK IF BOOK EXISTS
+		$book = Book::find($bookId);
+		if (!$book) return response()->json(['message' => 'No book found.'], 404);
+
+		$readingList =  ReadingList::where('user_id', Auth::user()->id)
+			->where('id', $id)->first();
+		if (!$readingList) return response()->json(['message' => 'No list found.'], 404);
+
+		ReadingListItem::where('reading_list_id', $id)
+			->where('book_id', $bookId)
+			->delete();
+		return response()->json(['message' => 'List item deleted successfully.'], 200);
+	}
+
+	public function moveItemUp($id, $bookId)
+	{
+		$readingListItem = $this->checkAndGetItem($id, $bookId);
+		if (!$readingListItem)
+			return response()->json(['message' => 'Invalid request'], 404);
+		if ($readingListItem->sort_no === 1)
+			return response()->json(['message' => 'Item is first.'], 200);
+
+		$readingListItem->sort_no -= 1;
+		$readingListItem->save();
+
+		$swapReadingListItem = ReadingListItem::where('reading_list_id', $id)
+			->where('sort_no', $readingListItem->sort_no)->first();
+		$swapReadingListItem->sort_no += 1;
+		$swapReadingListItem->save();
+
+		return response()->json(['message' => 'Item moved up.']);
+	}
+
+	public function moveItemDown($id, $bookId)
+	{
+		$readingListItem = $this->checkAndGetItem($id, $bookId);
+		if (!$readingListItem)
+			return response()->json(['message' => 'Invalid request'], 404);
+
+		$maxSort = ReadingListItem::where('reading_list_id', $id)
+			->orderBy('sort_no', 'desc')->pluck('sort_no')->first();
+		if ($readingListItem->sort_no === $maxSort)
+			return response()->json(['message' => 'Item is last.'], 200);
+
+		$readingListItem->sort_no += 1;
+		$readingListItem->save();
+
+		$swapReadingListItem = ReadingListItem::where('reading_list_id', $id)
+			->where('sort_no', $readingListItem->sort_no)->first();
+		$swapReadingListItem->sort_no -= 1;
+		$swapReadingListItem->save();
+
+		return response()->json(['message' => 'Item moved down.']);
+	}
+
 	protected function validateList()
 	{
 		return request()->validate([
 			'name' => ['required', 'max:100', 'regex:/^[a-zA-Z0-9 \/\-,.:]+$/']
 		]);
+	}
+
+	protected function checkAndGetItem($id, $bookId)
+	{
+		// CHECK READING LIST EXISTS FOR USER
+		$readingList =  ReadingList::where('user_id', Auth::user()->id)
+			->where('id', $id)->first();
+		if (!$readingList) return false;
+
+		// CHECK READING LIST ITEM EXISTS FOR THE LIST
+		$readingListItem = ReadingListItem::where('reading_list_id', $readingList->id)
+			->where('book_id', $bookId)->first();
+		if (!$readingListItem) return false;
+
+		return $readingListItem;
 	}
 }

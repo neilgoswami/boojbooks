@@ -37,5 +37,25 @@ Route::middleware('auth:api')->group(function () {
 	Route::put('/lists/{readingList}', [ReadingListController::class, 'update']);
 	Route::delete('/lists/{readingList}', [ReadingListController::class, 'destroy']);
 
-	Route::get('/lists/{readingList}/items', [ReadingListController::class, 'listItems']);
+	Route::get(
+		'/lists/{readingList}/books',
+		[ReadingListController::class, 'listItems']
+	);
+	Route::post(
+		'/lists/{readingList}/books',
+		[ReadingListController::class, 'addListItem']
+	);
+	Route::delete(
+		'/lists/{readingList}/books/{book}',
+		[ReadingListController::class, 'removeListItem']
+	);
+
+	Route::get(
+		'/lists/{readingList}/books/{book}/up',
+		[ReadingListController::class, 'moveItemUp']
+	);
+	Route::get(
+		'/lists/{readingList}/books/{book}/down',
+		[ReadingListController::class, 'moveItemDown']
+	);
 });
