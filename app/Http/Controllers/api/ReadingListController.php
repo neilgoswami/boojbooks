@@ -36,7 +36,10 @@ class ReadingListController extends Controller
 		$readingList->user_id = Auth::user()->id;
 		$readingList->name = $validatedData['name'];
 		$readingList->save();
-		return response()->json(['message' => 'List added successfully.'], 201);
+		return response()->json([
+			'message' => 'List added successfully.',
+			'data' => $readingList
+		], 201);
 	}
 
 	/**
@@ -67,7 +70,10 @@ class ReadingListController extends Controller
 		$validatedData = $this->validateList();
 		$readingList->name = $validatedData['name'];
 		$readingList->update();
-		return response()->json(['message' => 'List updated successfully.', 201]);
+		return response()->json([
+			'message' => 'List updated successfully.',
+			'data' => $readingList
+		], 201);
 	}
 
 	/**
