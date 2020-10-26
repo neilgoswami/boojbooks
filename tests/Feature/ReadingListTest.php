@@ -17,7 +17,6 @@ class ReadingListTest extends TestCase
 
 	public function testGetReadingListsWithoutLogin()
 	{
-		$user = User::factory()->create();
 		$this->json('GET', 'api/lists', $this->header)
 			->assertStatus(401);
 	}
@@ -206,7 +205,7 @@ class ReadingListTest extends TestCase
 			]);
 	}
 
-	public function testDeleteReadingList()
+	public function testDeleteReadingListSuccessfully()
 	{
 		$user = User::factory()->create();
 		$listName = 'Reading List 1';

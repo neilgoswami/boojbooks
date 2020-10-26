@@ -96,7 +96,7 @@ class ReadingListController extends Controller
 	{
 		$readingList =  ReadingList::where('user_id', Auth::user()->id)
 			->where('id', $id)->first();
-		if (!$readingList) return response()->json(['message' => 'No list found.'], 404);
+		if (!$readingList) return response()->json(['message' => 'No books found in the list.'], 404);
 
 		return $readingList->readingListItems;
 	}
@@ -120,7 +120,10 @@ class ReadingListController extends Controller
 			'sort_no' => $sortNumber
 		]);
 
-		return $readingListItem;
+		return response()->json([
+			'message' => 'Book added to list successfully.',
+			'data' => $readingListItem
+		], 201);
 	}
 
 	public function removeListItem($id, $bookId)
@@ -136,7 +139,7 @@ class ReadingListController extends Controller
 		ReadingListItem::where('reading_list_id', $id)
 			->where('book_id', $bookId)
 			->delete();
-		return response()->json(['message' => 'List item deleted successfully.'], 200);
+		return response()->json(['message' => 'Book deleted from list successfully.'], 200);
 	}
 
 	public function moveItemUp($id, $bookId)
