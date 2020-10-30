@@ -14,6 +14,6 @@ class ReadingListSeeder extends Seeder
 	 */
 	public function run()
 	{
-		ReadingList::factory()->count(3)->create();
+		ReadingList::factory()->count(10)->create();
 	}
 }
