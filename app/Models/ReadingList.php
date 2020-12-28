@@ -25,5 +25,10 @@ class ReadingList extends Model
 	{
 		$this->active = false;
 		return $this->save();
-	}
+    }
+    
+    public function getAllReadingList(User $user)
+    {
+        return $user->readingList();
+    }
 }
